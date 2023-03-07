@@ -1,21 +1,25 @@
-import React, { useEffect, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import "../all-css/Sidebar.css";
-import { Link } from "react-router-dom";
 import axios from "axios";
 import { FIND_BY_EMAIL_ID } from "../../Constant";
-import { GET_USER_DATA } from "../../Constant";
 import Usercard from "./Usercard";
-import Loding from './Loadingbar'
-import Loadingbar from "./Loadingbar";
 import Smallloader from "./Smallloader";
+import { MyContext } from "../Context";
 
 export default function Sidebar(props) {
   const [newChatEmail, setnewChatEmail] = useState("");
   const [users, setusers] = useState([]);
-  const token = localStorage.getItem("token");
-  const [progress,setprogress] = useState(10);
+  const [progress, setprogress] = useState(10);
   // -------pending implementation of groups----->
   const [peopleorgroup, setgrouporpeople] = useState(props.peopleorgroup);
+  const { value } = useContext(MyContext);
+
+  useEffect(() => {
+    setprogress(20);
+    setprogress(80);
+    setprogress(null);
+    setusers(value.users);
+  }, []);
 
   // -------Create new chat and group code -->
   const showCreateChat = () => {
@@ -33,12 +37,9 @@ export default function Sidebar(props) {
     const newgroup = document.getElementById("newgroup");
     const newchat = document.getElementById("newchat");
 
-    // hide.style.display = "none";
-    // newchat.style.display = "none";
-    // newgroup.style.display = "none";
-
-    alert("Thise Field Is under development")
-
+    hide.style.display = "none";
+    newchat.style.display = "none";
+    newgroup.style.display = "block";
   };
 
   const cancel = (e) => {
@@ -54,8 +55,6 @@ export default function Sidebar(props) {
     }
   };
 
-  // ---------------->//
-
   // ----------chack for valid email ------ >
 
   function isValidEmail(email) {
@@ -66,7 +65,6 @@ export default function Sidebar(props) {
     return emailRegex.test(email);
   }
 
-  //  --------------- > //
 
   // ------start new chat ------------>
   const CreateNewChat = () => {
@@ -98,33 +96,6 @@ export default function Sidebar(props) {
     }
   };
 
-  // -----------------> //
-
-  // -------------get users -------------->
-
-  useEffect(() => {
-    //get all users
-    setprogress(20)
-    axios
-      .post(GET_USER_DATA, { token: token })
-      .then((e) => {
-        if (e.data) {
-          // console.log(e.data.users);
-          setprogress(80)
-          setusers(e.data.users);
-          setprogress(100)
-          setprogress(null)
-          props.getowner({ owner: e.data.ownerid });
-          // console.log(e.data.users)
-        } else {
-          console.log("No data found");
-        }
-      })
-      .catch(() => {
-        alert("error no data or users");
-      });
-  }, []);
-
   const updateuser = ({ username, userid }) => {
     props.updateuser({ username: username, userid: userid });
   };
@@ -132,7 +103,7 @@ export default function Sidebar(props) {
   return (
     <>
       <div>
-        {progress && <Smallloader value={setprogress}/>}
+        {progress != null && <Smallloader value={setprogress} />}
         <div id="users">
           {users.map((user, index) => {
             return (
@@ -146,7 +117,7 @@ export default function Sidebar(props) {
                   })
                 }
               >
-                <Usercard name={user.username} />
+                <Usercard name={user.username} id = {user.userid} />
               </div>
             );
           })}

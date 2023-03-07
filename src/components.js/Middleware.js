@@ -1,64 +1,27 @@
-// import React, { useEffect, useState } from "react";
-// import { BrowserRouter as Router, Routes, Route, Link } from "react-router-dom";
-// import Register from "./Register";
-// import Login from "./Login";
-// import { useNavigate } from "react-router-dom";
-// import axios from "axios";
-// import { BASE_URL, GET_USER_DATA } from "../Constant";
-
-// export default function Middleware(props) {
-
-//   const usenavigate = useNavigate();
-//   const [showcomp, setshowcomp] = useState(false);
-
-//   useEffect(() => {
-//     const auth_token = localStorage.getItem("token");
-//     if(auth_token != null){
-//       // make authentication from backend
-//       axios.post(GET_USER_DATA,{token:auth_token}).then((e)=>{
-//         {
-//           {
-//             (e.data.verified == true)  ? setshowcomp(true) : usenavigate('/login')
-//           }
-//         }
-//       }).catch((error)=>{
-//         console.log(error);
-//       })
-//     }
-//     else{
-//       alert("session Expired")
-//       usenavigate('/login')
-//     }
-
-//   }, [props]);
-
-//   return (
-//     <div>
-//       { showcomp ? <props.Component /> : "Loading ..."}
-//     </div>
-//   );
-// }
-
 import React, { useContext, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { GET_USER_DATA } from "../Constant";
 import axios from "axios";
 import Loadingbar from "./chat components/Loadingbar";
 import { MyContext } from "./Context";
+import { MessageNotificationContext } from "./Context";
+let Alerts = {};
+
 
 export default function Middleware(props) {
   const { updatevalue } = useContext(MyContext);
-
   const usenavigate = useNavigate();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [progressval, setprogressval] = useState(10);
+  // const [Alerts,setAlerts] = useState({});
+
 
   useEffect(() => {
     const auth_token = localStorage.getItem("token");
-    setprogressval(20);
+    setprogressval(30);
     if (auth_token != null) {
       // Make authentication from backend
-      setprogressval(30);
+      setprogressval(40);
       axios
         .post(GET_USER_DATA, { token: auth_token })
         .then((e) => {
@@ -81,10 +44,26 @@ export default function Middleware(props) {
     }
   }, []);
 
+
+  const updateAlert = (update_log) =>{
+    // console.log(Alerts[update_log.userid]);
+    if(Alerts[update_log.userid]){
+      // setAlerts({...Alerts,[Alerts[update_log.userid]] : Alerts[update_log.userid]+1});
+      Alerts[update_log.userid] = Alerts[update_log.userid] + 1;
+    }
+    else{
+      // setAlerts({...Alerts, [update_log.userid] : 1 });
+      Alerts[update_log.userid] = 1;
+
+    }
+  }
+
   return (
     <div>
       {isAuthenticated ? (
-        <props.Component />
+        <MessageNotificationContext.Provider value={{Alerts,updateAlert}}>
+          <props.Component />
+        </MessageNotificationContext.Provider>
       ) : (
         <Loadingbar value={progressval} />
       )}

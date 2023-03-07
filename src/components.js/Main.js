@@ -9,27 +9,41 @@ import axios from "axios";
 import { GET_USER_CHAT } from "../Constant";
 import Chatbubble from "./chat components/Chatbubble";
 import Smallloader from "./chat components/Smallloader";
-import { MyContext } from "./Context";
+import { MyContext, MessageNotificationContext } from "./Context";
 const socket = io("https://message-service-jrof.onrender.com");
 
 export default function Main() {
   // note -- true for people and false for groups
   const [grouporpeople, setgrouporpeople] = useState(true);
   const [currentuser, setcurrentuser] = useState({});
-  const [prevuserid, setprevuserid] = useState("0");
   const [messages, setmessages] = useState([]);
   const [namechip, setnamechip] = useState("");
   const [message, setmessage] = useState("");
   const [ownerid, setownerid] = useState("");
   const [progress, setprogress] = useState(0);
 
+  const {updateAlert} = useContext(MessageNotificationContext);
   const { value } = useContext(MyContext);
+  useEffect(() => {
+    setownerid(value.owneridcon);
+    socket.emit("sendmyid", { userid: value.owneridcon });
+  }, []);
 
-  // useEffect(() => {
-  //   setownerid(value.owneridcon);
-  //   socket.emit("sendmyid", { userid: value.owneridcon });
-  //   console.log(value.owneridcon);
-  // },[]);
+  useEffect(() => {
+    if (
+      sessionStorage.getItem("selecteduserid") &&
+      sessionStorage.getItem("selectedusername")
+    ) {
+      const useridlocal = sessionStorage.getItem("selecteduserid");
+      const usernamelocal = sessionStorage.getItem("selectedusername");
+      const useerr = {
+        username: usernamelocal,
+        userid: useridlocal,
+      };
+      setnamechip(usernamelocal);
+      setcurrentuser(useerr);
+    }
+  }, []);
 
   useEffect(() => {
     let group = document.getElementById("g");
@@ -61,9 +75,6 @@ export default function Main() {
           setprogress(70);
           setprogress(80);
           setprogress(90);
-
-          // console.log(e.data.messages);
-          // setownerid(e.data.ownerid);
           setmessages(e.data.messages);
           setprogress(95);
           setprogress(1);
@@ -88,13 +99,13 @@ export default function Main() {
       // work here for when user refresh page save selected user in session storage
 
       setnamechip(username);
-      console.log(username + userid);
       const userrr = {
         username: username,
         userid: userid,
       };
       setcurrentuser(userrr);
-      // sessionStorage.setItem("selecteduser", `${userid}`);
+      sessionStorage.setItem("selecteduserid", `${userid}`);
+      sessionStorage.setItem("selectedusername", `${username}`);
     }
   };
 
@@ -122,9 +133,7 @@ export default function Main() {
         // --------socket io starts------>
         // backend event name  msgfromfrontToback
 
-        socket.emit("msgfromfrontToback", msgdraft, (respose) => {
-          console.log(respose);
-        });
+        socket.emit("msgfromfrontToback", msgdraft, (respose) => {});
 
         // console.log(messages)
       } else {
@@ -132,27 +141,26 @@ export default function Main() {
     }
   };
 
-  const getowner = ({ owner }) => {
-    setownerid(owner);
-    socket.emit("sendmyid", { userid: owner });
-  };
-
   // -------listen for incomming messages on event messagefromuser------->
 
   useEffect(() => {
     socket.on("messagefromuser", (data) => {
       // -----all notification bar goes from here---->
-      if (currentuser.userid) {
-        console.log(currentuser.userid);
+      // const {}
+      if (sessionStorage.getItem('selecteduserid') && sessionStorage.getItem('selecteduserid') == data.sid) {
         const ndata = {
           sid: data.sid,
           rid: data.rid,
           createdAt: Date(),
           message: data.message,
         };
+
+
         setmessages((oldmsg) => {
           return [...oldmsg, ndata];
         });
+        updateAlert({userid:data.sid});
+
         setTimeout(() => {
           const scrollDiv = document.getElementById("chatcontainer");
           scrollDiv.scrollTo({
@@ -162,7 +170,7 @@ export default function Main() {
         }, 600);
       }
     });
-  }, [currentuser]);
+  },[]);
 
   useEffect(() => {
     if (namechip) {
@@ -215,11 +223,7 @@ export default function Main() {
             Groups
           </span>
         </div>
-        <Sidebar
-          updateuser={updateuser}
-          peopleorgroup={grouporpeople}
-          getowner={getowner}
-        />
+        <Sidebar updateuser={updateuser} peopleorgroup={grouporpeople} />
       </div>
       <div id="chat-area">
         <div id="chatcontainer">

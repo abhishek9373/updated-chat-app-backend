@@ -22,7 +22,6 @@ export default function Login() {
 
   const sendToLogin = (e) => {
     e.preventDefault();
-    console.log("called");
     if (isValidEmail(email)) {
       if (password.length >= 5) {
         axios

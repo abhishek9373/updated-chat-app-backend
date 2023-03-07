@@ -14,7 +14,6 @@ function App() {
 
   const updatevalue = (updated_value) => {
     setvalue(updated_value);
-    console.log(updated_value);
   };
 
   return (

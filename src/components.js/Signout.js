@@ -6,7 +6,9 @@ export default function Signout() {
     const navigate = useNavigate();
     const Signout = () =>{
         localStorage.setItem('token','');
-        navigate('/');
+        sessionStorage.removeItem("selectedusername")
+        sessionStorage.removeItem("selecteduserid")
+        navigate('/login');
     }
   return (
     <div>
