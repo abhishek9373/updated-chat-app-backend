@@ -1,0 +1,53 @@
+
+.Container{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+input{
+    width: 40vw;
+    height: 5vh;
+    font-size: large;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    padding: 2px;
+    outline: none;
+    border: none;
+    background-color: #fff1f5;
+    
+}
+
+
+
+.btn-justify{
+    display: flex;
+    justify-content: center;
+}
+
+button{
+    padding: 9px;
+    background-color: #c4baf4;
+    border-radius: 3px;
+    border: none;
+    color: black;
+    font-weight: bold;
+    font-size: 20px;
+}
+
+button:hover{
+    cursor: pointer;
+    padding: 10px;
+}
+
+.input-lable{
+    border: 2px solid black;
+    padding: 3px;
+    border-radius: 4px;
+    background-color: #fff1f5;
+}
+
+#alert{
+    position: fixed;
+    top: 0px;
+}

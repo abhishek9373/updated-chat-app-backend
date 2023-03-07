@@ -1,0 +1,32 @@
+
+.userTab{
+    display: flex;
+    justify-content: space-around;
+    padding-bottom: 3vh;
+}
+
+.addUserandPeople{
+    position: fixed;
+    bottom: 15px;
+    margin-left: 2vw;
+    /* background-color: ; */
+}
+button{
+    font-size: 1rem;
+    background-color: aqua;
+}
+
+#newchat{
+    border-radius: 7px;
+    display: none;
+}
+
+#newgroup {
+    border-radius: 7px;
+    display: none;
+}
+
+.newchatorgroup{
+    width: 25vw;
+    overflow: hidden;
+}

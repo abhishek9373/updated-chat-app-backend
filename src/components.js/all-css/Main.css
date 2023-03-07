@@ -1,0 +1,136 @@
+.Top-bar{
+    display: flex;
+    justify-content: space-around;
+    padding: 3px;
+    border-bottom: 2px solid black;
+}
+
+.userinfo{
+    display: flex;
+    align-items: center;
+    
+}
+
+.avatar{
+    background-color: brown;
+    border-radius: 50%;
+    padding: 10px;
+    height: 4rem;
+    width: 4rem;
+    margin-right: 5px;
+}
+
+.namechip{
+    font-size: 1.5rem;
+}
+
+.sign-out{
+    position: fixed;
+    right: 5px;
+    cursor: pointer;
+}
+
+.Userbar{
+    /* background-color: #d6ffe7; */
+    width: 26vw;
+    height: 100vh;
+    position: fixed;
+    left: 0px;
+    overflow: auto;
+    border-radius: 3px;
+    border-right: 0.2px solid black;
+    padding: 3px;
+    padding-top: 10px;
+}
+
+#chat-area{
+    position: fixed;
+    right: 2px;
+    height: 85vh;
+    width: 73.1vw;
+}
+
+#chatcontainer{
+    height: 79vh;
+    width: 73.1vw;
+    overflow: auto;
+    padding: 2.5vw;
+    padding-bottom: 20px;
+}
+
+#sender{
+    display: flex;
+    justify-content: end;
+    padding-right: 1vw;
+    margin-right: 4vw;
+    margin-top: 10px;
+
+    /* background-color: aqua; */
+}
+#ins{
+    background-color: aqua;
+    padding: 10px;
+    border-radius: 3px;
+}
+#inr{
+    background-color: aqua;
+    border-radius: 3px;
+    padding: 10px;
+}
+
+#reciever{
+    display: flex;
+    justify-content: start;
+    border-radius: 3px;
+    margin-top: 10px;
+}
+
+.timetag{
+    display: flex;
+    justify-content: end;
+    font-size: 0.7rem;
+}
+
+.discol{
+    display: flex;
+    flex-direction: column;
+}
+
+
+
+.inpute{
+    position: fixed;
+    bottom: 1px;
+    left: 45vw;
+    border-radius: 7px;
+    background-color: #d6ffe7;
+    font-size: large;
+    padding-left: 5px;
+}
+
+.send{
+    position: fixed;
+    bottom: 12px;
+    left: 87vw;
+}
+/* 
+#peopleorgroup{
+    text-decoration: none;
+}
+
+#peopleorgroup:active{
+    background-color: #d6ffe7;
+} */
+
+/* #peopleorgroup{
+    text-decoration: none;
+} */
+
+span.active {
+    color: red;
+    text-decoration: none;
+  }
+
+span{
+    cursor: pointer;
+}
