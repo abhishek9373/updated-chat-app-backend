@@ -3,23 +3,24 @@ const app = express();
 require("dotenv").config();
 const DbConnect = require("./MongoConnection");
 const cors = require("cors");
-const mongoose = require("mongoose");
-const jwt = require("jsonwebtoken");
 const token_auth = require("./middlewares/VerifyUser");
 const bodyparser = require("body-parser");
 const { ObjectId } = require("mongodb");
 const { createServer } = require("http");
 const { Server } = require("socket.io");
-const { v4: uuidv4 } = require("uuid");
 
 // socket server
 const httpServer = createServer(app);
 const io = new Server(httpServer, {
-  cors: "https://chat-whatsapp-clone.netlify.app",
+  cors: "https://chat-whatsapp-clone.netlify.app"
 });
 
 const PORT = 5000;
-app.use(cors());
+
+const corsOptions = {
+  origin: 'https://chat-whatsapp-clone.netlify.app'
+};
+app.use(cors(corsOptions));
 app.use(express.json());
 app.use(bodyparser.json());
 
@@ -210,7 +211,13 @@ app.post("/findbyemailid", Decode, async (req, res) => {
               res.status(404).send("user already present");
             }
           }
+          else{
+            res.status(404).send({itsyou:true});
+          }
         });
+      }
+      else{
+        res.send({error:true})
       }
     });
   }
