@@ -10,7 +10,7 @@ import { GET_USER_CHAT } from "../Constant";
 import Chatbubble from "./chat components/Chatbubble";
 import Smallloader from "./chat components/Smallloader";
 import { MyContext, MessageNotificationContext } from "./Context";
-const socket = io("https://message-service-jrof.onrender.com");
+const socket = io("https://139.59.28.102:5000");
 
 export default function Main() {
   // note -- true for people and false for groups
@@ -22,7 +22,7 @@ export default function Main() {
   const [ownerid, setownerid] = useState("");
   const [progress, setprogress] = useState(0);
 
-  const {updateAlert} = useContext(MessageNotificationContext);
+  const { updateAlert } = useContext(MessageNotificationContext);
   const { value } = useContext(MyContext);
   useEffect(() => {
     setownerid(value.owneridcon);
@@ -119,6 +119,7 @@ export default function Main() {
           message: message,
           createdAt: Date(),
         };
+        socket.emit("msgfromfrontToback", msgdraft, (respose) => {});
         setmessages([...messages, msgdraft]);
         setmessage("");
 
@@ -133,8 +134,6 @@ export default function Main() {
         // --------socket io starts------>
         // backend event name  msgfromfrontToback
 
-        socket.emit("msgfromfrontToback", msgdraft, (respose) => {});
-
         // console.log(messages)
       } else {
       }
@@ -147,7 +146,10 @@ export default function Main() {
     socket.on("messagefromuser", (data) => {
       // -----all notification bar goes from here---->
       // const {}
-      if (sessionStorage.getItem('selecteduserid') && sessionStorage.getItem('selecteduserid') == data.sid) {
+      if (
+        sessionStorage.getItem("selecteduserid") &&
+        sessionStorage.getItem("selecteduserid") == data.sid
+      ) {
         const ndata = {
           sid: data.sid,
           rid: data.rid,
@@ -155,11 +157,13 @@ export default function Main() {
           message: data.message,
         };
 
+        // setmessages((oldmsg) => {
+        //   return [...oldmsg, ndata];
+        // });
 
-        setmessages((oldmsg) => {
-          return [...oldmsg, ndata];
-        });
-        updateAlert({userid:data.sid});
+        setmessages((old_msg)=>{return [...old_msg, ndata]});
+        // updateAlert({userid:data.sid});
+
 
         setTimeout(() => {
           const scrollDiv = document.getElementById("chatcontainer");
@@ -170,7 +174,7 @@ export default function Main() {
         }, 600);
       }
     });
-  },[]);
+  }, []);
 
   useEffect(() => {
     if (namechip) {
