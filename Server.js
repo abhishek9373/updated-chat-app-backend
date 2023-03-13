@@ -3,259 +3,105 @@ const app = express();
 require("dotenv").config();
 const DbConnect = require("./MongoConnection");
 const cors = require("cors");
-const token_auth = require("./middlewares/VerifyUser");
 const bodyparser = require("body-parser");
-const { ObjectId } = require("mongodb");
 const { createServer } = require("http");
 const { Server } = require("socket.io");
+const fs = require("fs");
 
-// socket server
+const { ConnectionModel, MessageModel } = require("./Models");
+DbConnect();
+
 const httpServer = createServer(app);
 const io = new Server(httpServer, {
-  cors: "https://chat-whatsapp-clone.netlify.app"
+  cors: "http://localhost:3000",
 });
-
 const PORT = 5000;
 
-const corsOptions = {
-  origin: 'https://chat-whatsapp-clone.netlify.app'
-};
-app.use(cors(corsOptions));
+// const options = {
+//   key: fs.readFileSync("/path/to/key.pem"),
+//   cert: fs.readFileSync("/path/to/cert.pem"),
+// };
+
+// const corsOptions = {
+//   origin: "http://localhost:3000",
+// };
+
+// routers
+const LoginRouter = require("./Routers/Login");
+const RegisterRouter = require("./Routers/Register");
+const getUsers = require("./Routers/Getusers");
+const findByEmailId = require("./Routers/FindByEmail");
+const getChats = require("./Routers/Getchats");
+
+app.use(cors());
 app.use(express.json());
 app.use(bodyparser.json());
 
-// all models
-const { Usermodel, ConnectionModel, MessageModel } = require("./Models");
-const bcryptjs = require("bcryptjs");
-const { GenJWT } = require("./middlewares/GetJWT");
-const Decode = require("./middlewares/Decode");
+app.use("/", LoginRouter);
+app.use("/", RegisterRouter);
+app.use("/", getUsers);
+app.use("/", findByEmailId);
+app.use("/", getChats);
 
-// Connect with database;
-DbConnect();
-
-// base endpoint
 app.get("/", (req, res) => {
   console.log("Requested");
   res.send("Working fine");
 });
 
-// register endpoint
-app.post("/register", (req, res) => {
-  const { email, password, name } = req.body;
-
-  if (email != null && password != null && name != null) {
-    bcryptjs.genSalt(10, (err, salt) => {
-      if (err) {
-        console.error(err);
-        return;
-      }
-
-      // Hash the password using the generated salt
-      bcryptjs.hash(password, salt, (err, hash) => {
-        if (err) {
-          console.error(err);
-          return;
-        }
-        const UserModel = new Usermodel({
-          name: name,
-          email: email,
-          password: hash,
-        });
-
-        UserModel.save()
-          .then(() => {
-            console.log("New user addedd");
-            res.send({ inserted: true });
-          })
-          .catch((error) => {
-            console.log(error.code);
-            if (error.code == 11000) {
-              res.send({ user_already_present: true });
-            } else {
-              res.status(500).send({ server_error: true });
-            }
-            //   console.log(error)
-          });
-      });
-    });
-  } else {
-    res.send({
-      invalid_passand_email: true,
-    });
-  }
-});
-
-app.post("/login", (req, res) => {
-  const { email, password } = req.body;
-
-  Usermodel.findOne({
-    email: email,
-  })
-    .then((user) => {
-      if (user) {
-        bcryptjs.compare(password, user.password, (err, result) => {
-          if (err) {
-            console.log("invalid password");
-            res.send({
-              invalid_pass: true,
-            });
-          } else {
-            if (result) {
-              const token = GenJWT(user._id.toString());
-              res.send({ authToken: token, invalid_pass: false });
-            } else {
-              res.send({
-                invalid_pass: true,
-              });
-            }
-          }
-        });
-      } else {
-        res.send({
-          Nouser: true,
-        });
-      }
-    })
-    .catch((error) => {
-      res.send({ Nouser: true });
-    });
-});
-
-// app.use();
-
-app.post("/getusers", token_auth, (req, res) => {
-  if (req.body.verified && req.body.userid) {
-    const { userid } = req.body;
-    ConnectionModel.find({ ownerid: userid })
-      .then(async (data, err) => {
-        if (data) {
-          // console.log(data[0].users[1].username);
-          const finalusers = data[0].users.sort(
-            (a, b) => b.lastmsg - a.lastmsg
-          );
-          res.send({ verified: true, users: finalusers, ownerid: userid });
-        } else {
-          res.send({
-            nousers: true,
-          });
-        }
-      })
-      .catch((error) => {
-        res.send({ verified: true, users: [] });
-      });
-  } else {
-    res.status(404).send({ verified: false });
-  }
-});
-
-app.post("/findbyemailid", Decode, async (req, res) => {
-  if (req.body.email && req.body.userid) {
-    const { email, userid } = req.body;
-
-    Usermodel.findOne({
-      email: email,
-    }).then((e) => {
-      if (e) {
-        // have to add verfy that useconnection present
-
-        Usermodel.findOne({
-          _id: new ObjectId(userid),
-        }).then(async (ef) => {
-          console.log(ef.name);
-
-          if (ef.email != email) {
-            try {
-              // console.log()
-              const con = await ConnectionModel.findOneAndUpdate(
-                { ownerid: userid },
-                {
-                  $push: {
-                    users: {
-                      username: e.name,
-                      lastmsg: Date(),
-                      userid: e._id.toString(),
-                    },
-                  },
-                },
-                { new: true, upsert: true }
-              );
-              console.log(con);
-
-              if (con) {
-                try {
-                  const con2 = await ConnectionModel.findOneAndUpdate(
-                    { ownerid: e._id.toString() },
-                    {
-                      $push: {
-                        users: {
-                          username: ef.name,
-                          lastmsg: Date(),
-                          userid: ef._id.toString(),
-                        },
-                      },
-                    },
-                    { new: true, upsert: true }
-                  );
-                  if (con2) {
-                    res.send({
-                      username: e.name,
-                      userid: e._id.toString(),
-                    });
-                  }
-                } catch (err) {
-                  res.status(404).send("user already present");
-                }
-              }
-            } catch (err) {
-              console.log(err);
-              res.status(404).send("user already present");
-            }
-          }
-          else{
-            res.status(404).send({itsyou:true});
-          }
-        });
-      }
-      else{
-        res.send({error:true})
-      }
-    });
-  }
-});
-
-// -----load userchat----->'
-
-app.post("/getuserchatting", Decode, (req, res) => {
-  if (req.body.userid && req.body.anotheruid) {
-    const { userid, anotheruid } = req.body;
-
-    MessageModel.find({
-      $or: [{ sid: userid, rid: anotheruid },{sid:anotheruid,rid:userid}],
-    })
-      .sort({
-        insertedAt: -1,
-      })
-      .then(async (data, err) => {
-        if (data) {
-          // console.log(data);
-          res.send({ messages: data, ownerid: userid });
-        } else {
-          res.send({ error: true });
-        }
-      })
-      .catch((error) => {
-        res.status(404).send({ error: true });
-      });
-  }
-});
-
 //  ------- all socket connection code ------------->
 
+// function to update connections
+
+const updateConnections = (sid, rid) => {
+  ConnectionModel.updateOne(
+    {
+      ownerid: sid,
+      users: {
+        $elemMatch: {
+          userid: rid,
+        },
+      },
+    },
+    {
+      $set: {
+        "users.$.lastmsg": new Date(),
+      },
+    }
+  )
+    .then((e) => {
+      ConnectionModel.updateOne(
+        {
+          ownerid: rid,
+          users: {
+            $elemMatch: {
+              userid: sid,
+            },
+          },
+        },
+        {
+          $set: {
+            "users.$.lastmsg": new Date(),
+          },
+        }
+      ).then((e) => {
+        console.log("both connections update");
+        return true;
+      });
+    })
+    .catch((error) => {
+      console.log(error)
+      return false;
+    });
+};
+
+// storage for socket ids
 const socks = {};
+const useridtosocks = {};
 
 io.on("connection", (socket) => {
   socket.on("sendmyid", (data) => {
     socks[data.userid] = socket.id;
+    useridtosocks[socket.id] = data.userid;
     console.log(socks);
   });
 
@@ -278,40 +124,54 @@ io.on("connection", (socket) => {
             io.to(socks[rid]).emit("messagefromuser", {
               sid: sid,
               message: message,
-              rid:rid
+              rid: rid,
             });
+            if(updateConnections(sid,rid)){
+              cb("message send to reciever")
+            }
             // -------update connection last msg  to change the order of the recently messaged user----->
-            ConnectionModel.updateOne(
-              { 
-                ownerid: sid,
-                userid: rid,
-              },
-              {
-                set: {
-                  lastmsg: Date(),
-                },
-              }
-            )
-              .then((e) => {
-                console.log(e);
-                ConnectionModel.updateOne(
-                  {
-                    ownerid: rid,
-                    userid: sid,
-                  },
-                  {
-                    set: {
-                      lastmsg: Date(),
-                    },
-                  }
-                ).then((e) => {
-                  console.log("both connections update");
-                  cb("message send");
-                });
-              })
-              .catch((error) => {
-                console.log(error);
-              });
+            // ConnectionModel.updateOne(
+            //   {
+            //     ownerid: sid,
+            //     users: {
+            //       $elemMatch: {
+            //         userid: rid,
+            //       },
+            //     },
+            //   },
+            //   {
+            //     $set: {
+            //       "users.$.lastmsg": new Date(),
+            //     },
+            //   }
+            // )
+            //   .then((e) => {
+            //     console.log(e);
+            //     ConnectionModel.updateOne(
+            //       {
+            //         ownerid: rid,
+            //         users: {
+            //           $elemMatch: {
+            //             userid: sid,
+            //           },
+            //         },
+            //       },
+            //       {
+            //         $set: {
+            //           "users.$.lastmsg": new Date(),
+            //         },
+            //       }
+            //     ).then((e) => {
+            //       console.log("both connections update");
+            //       cb("message send");
+            //     });
+            //   })
+            //   .catch((error) => {
+            //     console.log(error);
+            //   });
+          }
+          else{
+            console.log("some error in online user updation")
           }
         })
         .catch((error) => {
@@ -324,8 +184,15 @@ io.on("connection", (socket) => {
         .then((e) => {
           if (e) {
             // -------send chat to the reciever by room------->
-            console.log("message saved");
-            cb("user not online message saved");
+            if(updateConnections(sid,rid)){
+              console.log("ok")
+              cb("user not online message saved");
+            }else{
+              console.log("no update");
+            }
+          }
+          else{
+            console.log("some error in offline user updation");
           }
         })
         .catch((error) => {
@@ -336,6 +203,10 @@ io.on("connection", (socket) => {
 
   socket.on("disconnect", () => {
     console.log("user gone");
+    let sockuserid = useridtosocks[socket.id];
+    delete useridtosocks[socket.id];
+    delete socks[sockuserid];
+    console.log(socks[sockuserid]);
     socket.disconnect();
   });
 });
@@ -343,5 +214,3 @@ io.on("connection", (socket) => {
 httpServer.listen(PORT, (e) => {
   console.log("Project is listening On Port: " + PORT);
 });
-
-// module.exports = { app };
