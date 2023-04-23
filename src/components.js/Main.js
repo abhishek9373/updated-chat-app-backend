@@ -10,7 +10,7 @@ import { GET_USER_CHAT } from "../Constant";
 import Chatbubble from "./chat components/Chatbubble";
 import Smallloader from "./chat components/Smallloader";
 import { MyContext, MessageNotificationContext } from "./Context";
-const socket = io("https://139.59.28.102:5000");
+const socket = io("http://localhost:5000");
 
 export default function Main() {
   // note -- true for people and false for groups
@@ -157,12 +157,17 @@ export default function Main() {
           message: data.message,
         };
 
-        // setmessages((oldmsg) => {
-        //   return [...oldmsg, ndata];
-        // });
+        setmessages((old_msg) => {
+          return [...old_msg, ndata];
+        });
+        
 
-        setmessages((old_msg)=>{return [...old_msg, ndata]});
-        // updateAlert({userid:data.sid});
+        // if (currentuser.userid == data.sid) {
+        //   updateAlert({ userid: data.sid });
+        //   console.log(currentuser.userid + data.sid)
+        // } else {
+        //   console.log(currentuser.userid + data.sid)
+        // }
 
 
         setTimeout(() => {
